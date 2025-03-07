@@ -1,0 +1,151 @@
+﻿@model Biblioteca.Presentation.Models.BemVindoViewModel
+@{
+    ViewData["Title"] = "Cadastrar Livros";
+    Layout = "~/Views/Shared/Layout.cshtml";
+}
+
+<p>Nome do usuário: @Model.Nome</p>
+
+<h1>Bem-vindo(a) à Nossa Biblioteca!</h1>
+<h5 class="text-center mb-3">Livros Cadastrados</h5>
+
+<!-- Div de Sucesso -->
+<div class="alert alert-success alert-dismissible fade show" id="divSuccess" role="alert" style="display:none;">
+    <strong>Sucesso!</strong><br /> <label id="successMsg"></label>
+    <button type="button" class="btn-close" aria-label="Close" onclick="$('#divSuccess').hide();"></button>
+</div>
+
+<!-- Div de Erro -->
+<div class="alert alert-danger alert-dismissible fade show" id="divErro" role="alert" style="display:none;">
+    <strong>Erro!</strong><br /> <label id="errorMsg"></label>
+    <button type="button" class="btn-close" aria-label="Close" onclick="$('#divErro').hide();"></button>
+</div>
+
+<form id="friendform" method="post">
+    <!-- Adiciona o link de download do PDF no canto superior direito -->
+    <div style="position: absolute; top: 10px; right: 10px;">
+        <a href="/Livro/GerarPdf" class="btn btn-primary">Baixar PDF</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <table id="exampleDatatable" class="table table-sm table-hover mt-3">
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Título</th>
+                        <th>ISBN</th>
+                        <th>Autor</th>
+                        <th>Editora</th>
+                        <th>Gênero</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dados serão inseridos aqui dinamicamente -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+
+<!-- Datatables -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+<script>
+        $(document).ready(function () {
+        $("#divErro").hide();
+        CarregarGrid();
+
+        function CarregarGrid() {
+            $("#divErro").hide();
+
+            $.ajax({
+                url: "/Usuario/GetAllUsuariosComLivrosAsync",
+                type: "GET",
+                contentType: "application/json; charset=utf-8", // Tipo de conteúdo
+                cache: false,
+                success: function (response) {
+                    $("#divErro").hide();
+                    if (response.errorStr != undefined && response.errorStr != null && response.errorStr != '') {
+                        $("#errorMsg").html(response.errorStr);
+                        $("#divErro").show();
+                    } else {
+
+                        var table2 = $('#exampleDatatable').DataTable();
+                        table2.destroy();
+
+                        $("#exampleDatatable").DataTable({
+                            "language": {
+                                "emptyTable": "Nenhum dado disponível." // Mensagem quando não houver dados
+                            },
+                            data: response, // Dados recebidos da requisição
+                            retrieve: true, // Habilita o uso dos dados antigos
+                            destroy: true, // Permite destruir a tabela e recriar
+                            columns: [
+                                { 'data': 'usuarioNome' },
+                                { 'data': 'titulo' },
+                                { 'data': 'isbn' },
+                                { 'data': 'autor' },
+                                { 'data': 'editora' },
+                                { 'data': 'genero' },
+                                {
+                                    "mData": null,
+                                    "bSortable": false,
+                                    "mRender": function (o) {
+                                        // Renderiza as ações de editar, excluir e relatório para cada linha
+                                        return '<div class="d-flex flex-row"><div class="p-2"><a href="/Livro/Editar?id=' + o.livroId + '" class="btn btn-info btn-sm">Editar</a></div>' +
+                                            ' <div class="p-2"><button class="btn btn-danger btn-sm btnExcluir" data-livroid="' + o.livroId + '" data-titulo="' + o.titulo + '">Excluir</button></div></div>';
+                                    }
+                                }
+                            ]
+                        });
+
+                        $('#exampleDatatable').on('click', '.btnExcluir', function (e) {
+
+                            e.preventDefault();
+                            var livroId = $(this).data('livroid');
+                            var titulo = $(this).data('titulo');
+                            exclude(livroId, titulo);
+                        });
+
+                    }
+                },
+                error: function (xhr, status, error) {
+                    $("#errorMsg").html("Erro ao tentar carregar os dados: " + error);
+                    $("#divErro").show();
+                }
+            });
+        }
+
+        function exclude(livroId, titulo) {
+
+            if (confirm("Confirma a exclusão do livro " + titulo + "?")) {
+                $.ajax({
+                    url: '/Livro/Excluir',
+                    type: 'POST',
+                    data: { livroId: livroId },
+                    success: function (response) {
+                        if (response.success) {
+                            window.location.href = response.redirectUrl;
+                            $("#divSuccess").html("Livro excluído com sucesso!");
+                            $("#divSuccess").show();
+                        } else {
+                            $("#errorMsg").html(response.errorStr);
+                            $("#divErro").show();
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        $("#errorMsg").html("Erro ao tentar excluir o livro: " + error);
+                        $("#divErro").show();
+                    }
+                });
+            } else {
+                return false;
+            }
+        }
+
+    }); // <-- FECHA O $(document).ready()
+
+</script>

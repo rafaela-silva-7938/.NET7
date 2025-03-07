@@ -1,0 +1,150 @@
+﻿@model Biblioteca.Presentation.Models.BemVindoViewModel
+@{
+    ViewData["Title"] = "Cadastrar Livro";
+    Layout = "~/Views/Shared/Layout.cshtml";
+}
+
+<h5 class="text-center mb-3">Cadastrar Livro</h5>
+
+<!-- Div de Sucesso -->
+<div class="alert alert-success alert-dismissible fade show" id="divSuccess" role="alert" style="display:none;">
+    <strong>Sucesso!</strong><br /> <label id="successMsg"></label>
+    <button type="button" class="btn-close" aria-label="Close" onclick="$('#divSuccess').hide();"></button>
+</div>
+
+<!-- Div de Erro -->
+<div class="alert alert-danger alert-dismissible fade show" id="divErro" role="alert" style="display:none;">
+    <strong>Erro!</strong><br /> <label id="errorMsg"></label>
+    <button type="button" class="btn-close" aria-label="Close" onclick="$('#divErro').hide();"></button>
+</div>
+
+<form id="friendform" method="post">
+    <div class="mb-3">
+        <label class="form-label">Título</label>
+        <input id="txtTitulo" required minlength="3" maxlength="200" name="Titulo" type="text"
+               class="form-control bg-light text-dark border-light" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">ISBN</label>
+        <input id="txtISBN" required minlength="10" maxlength="13" name="ISBN" type="text"
+               class="form-control bg-light text-dark border-light" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Gênero</label>
+        <input id="txtGenero" required minlength="3" maxlength="150" name="Genero" type="text"
+               class="form-control bg-light text-dark border-light" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Autor</label>
+        <input id="txtAutor" required minlength="4" maxlength="150" name="Autor" type="text"
+               class="form-control bg-light text-dark border-light" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Editora</label>
+        <input id="txtEditora" required minlength="13" maxlength="50" name="Editora" type="text"
+               class="form-control bg-light text-dark border-light" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Sinopse</label>
+        <textarea rows="4" cols="50" id="txtSinopse" required minlength="10" maxlength="1000" name="Sinopse"
+                  class="form-control bg-light text-dark border-light"></textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Foto</label>
+        <input id="txtFotoJPGJPEG" required name="FotoJPGJPEG" type="file"
+               class="form-control bg-light text-dark border-light" />
+    </div>
+
+    <div class="d-grid">
+        <input id="btnSubmit" type="button" value="Cadastrar" class="btn btn-primary">
+    </div>
+
+
+</form>
+
+<script>
+    $(document).ready(function () {
+        $("#divErro").hide(); // Esconde a div de erro inicialmente
+        $("#divSuccess").hide(); // Esconde a div de sucesso inicialmente
+
+        $("#btnSubmit").click(function (e) {
+            e.preventDefault(); 
+
+            var formData = new FormData();
+            formData.append("Titulo", $("#txtTitulo").val());
+            formData.append("ISBN", $("#txtISBN").val());
+            formData.append("Genero", $("#txtGenero").val());
+            formData.append("Autor", $("#txtAutor").val());
+            formData.append("Editora", $("#txtEditora").val());
+            formData.append("Sinopse", $("#txtSinopse").val());
+
+            var fileInput = $("#txtFotoJPGJPEG")[0].files[0];
+            if (fileInput) {
+                formData.append("FotoJPGJPEG", fileInput); // Adiciona o arquivo ao FormData
+            }
+
+            var token = '@Model.Token';  // Recupera o token JWT do modelo
+
+            // Verifica se o token existe
+            if (!token) {
+                window.location.href = '/Usuario/login'; // Redireciona se o token não for encontrado
+                return;
+            }
+
+            fetch('https://localhost:7211/Livro/CadastrarLivro', {
+                method: 'POST',  // Alterado para POST
+                headers: {
+                    'Authorization': 'Bearer ' + token  // Adiciona o token JWT ao cabeçalho
+                },
+                body: formData  // Envia os dados no corpo da requisição
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Erro na requisição: " + response.status); // Se a resposta não for OK
+                }
+                var contentType = response.headers.get("content-type");
+                // Verifica se a resposta é JSON
+                if (contentType && contentType.includes("application/json")) {
+                    return response.json();  // Retorna o JSON da resposta
+                } else {
+                    return response.text();
+                }
+            })
+            .then(data => {
+                $("#divErro").hide(); // Esconde a div de erro caso haja sucesso
+
+                if (typeof data === "string") {
+                    // Exibe mensagem de sucesso se for uma string
+                    $("#divSuccess").show();
+                    $("#successMsg").html(data);
+                    $("#txtTitulo, #txtISBN, #txtGenero, #txtAutor, #txtEditora, #txtSinopse").val('');
+                    $("#txtFotoJPGJPEG").val(''); // Limpa o campo de arquivo
+                } else if (data.errorStr) {
+                    // Exibe mensagem de erro se houver um erro
+                    $("#errorMsg").html(data.errorStr);
+                    $("#divErro").show();
+                } else {
+                    // Caso o cadastro seja realizado com sucesso
+                    $("#divSuccess").show();
+                    $("#successMsg").html("Cadastro realizado com sucesso!");
+                    // Limpa os campos do formulário
+                    $("#txtTitulo, #txtISBN, #txtGenero, #txtAutor, #txtEditora, #txtSinopse").val('');
+                    $("#txtFotoJPGJPEG").val(''); // Limpa o campo de arquivo
+                }
+            })
+            .catch(error => {
+                $("#errorMsg").html("ERRO! " + error); // Exibe erro caso ocorra algum problema
+                $("#divErro").show();
+            });
+        });
+
+
+
+    });
+</script>

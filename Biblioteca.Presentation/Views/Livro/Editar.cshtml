@@ -1,0 +1,118 @@
+﻿@model Biblioteca.Presentation.Models.EditarLivroViewModel
+@{
+    ViewData["Title"] = "Editar";
+    Layout = "~/Views/Shared/Layout.cshtml";
+}
+
+<h5 class="text-center mb-3">Editar Livro</h5>
+
+<!-- Div de Sucesso -->
+<div class="alert alert-success alert-dismissible fade show" id="divSuccess" role="alert" style="display:none;">
+    <strong>Sucesso!</strong><br /> <label id="successMsg"></label>
+    <button type="button" class="btn-close" aria-label="Close" onclick="$('#divSuccess').hide();"></button>
+</div>
+
+<!-- Div de Erro -->
+<div class="alert alert-danger alert-dismissible fade show" id="divErro" role="alert" style="display:none;">
+    <strong>Erro!</strong><br /> <label id="errorMsg"></label>
+    <button type="button" class="btn-close" aria-label="Close" onclick="$('#divErro').hide();"></button>
+</div>
+
+<form id="friendform" method="post" enctype="multipart/form-data">
+    <input type="hidden" id="hdnIdLivro" name="Id" value="@Model.Id" />
+    <input type="hidden" id="hdnIdUsuario" name="UsuarioId" value="@Model.UsuarioId" />
+    <input type="hidden" id="hdnFoto" name="Foto" value="@Model.Foto" />
+
+    <div class="mb-3">
+        <label class="form-label">Título</label>
+        <input id="txtTitulo" required minlength="3" maxlength="200" name="Titulo" type="text"
+               class="form-control bg-light text-dark border-light" value="@Model.Titulo" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">ISBN</label>
+        <input id="txtISBN" required minlength="10" maxlength="13" name="ISBN" type="text"
+               class="form-control bg-light text-dark border-light" value="@Model.ISBN" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Gênero</label>
+        <input id="txtGenero" required minlength="3" maxlength="150" name="Genero" type="text"
+               class="form-control bg-light text-dark border-light" value="@Model.Genero" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Autor</label>
+        <input id="txtAutor" required minlength="4" maxlength="150" name="Autor" type="text"
+               class="form-control bg-light text-dark border-light" value="@Model.Autor" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Editora</label>
+        <input id="txtEditora" required minlength="3" maxlength="50" name="Editora" type="text"
+               class="form-control bg-light text-dark border-light" value="@Model.Editora" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Sinopse</label>
+        <textarea rows="4" cols="50" id="txtSinopse" required minlength="10" maxlength="1000" name="Sinopse"
+                  class="form-control bg-light text-dark border-light">@Model.Sinopse</textarea>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Foto</label>
+        <input id="txtFotoJPGJPEG" name="FotoJPGJPEG" type="file"
+               class="form-control bg-light text-dark border-light" />
+    </div>
+
+    <div class="d-grid">
+        <input id="btnSubmit" type="button" value="Salvar" class="btn btn-primary">
+    </div>
+</form>
+
+<script>
+    $(document).ready(function () {
+        $("#btnSubmit").click(function () {
+            var formData = new FormData();
+            formData.append("Id", $("#hdnIdLivro").val());
+            formData.append("UsuarioId", $("#hdnIdUsuario").val());
+            formData.append("Foto", $("#hdnFoto").val());
+            formData.append("Titulo", $("#txtTitulo").val());
+            formData.append("ISBN", $("#txtISBN").val());
+            formData.append("Genero", $("#txtGenero").val());
+            formData.append("Autor", $("#txtAutor").val());
+            formData.append("Editora", $("#txtEditora").val());
+            formData.append("Sinopse", $("#txtSinopse").val());
+
+            var fileInput = $("#txtFotoJPGJPEG")[0].files[0];
+            if (fileInput) {
+                formData.append("FotoJPGJPEG", fileInput);
+            }
+
+            $.ajax({
+                url: "/Livro/Editar",
+                type: "POST",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    $("#divErro").hide();
+                    if (response.errorStr) {
+                        $("#errorMsg").html(response.errorStr);
+                        $("#divErro").show();
+                    } else {
+                        $("#divSuccess").show();
+                        $("#successMsg").html("Livro salvo com sucesso!");
+                         $("#hdnIdLivro, #hdnIdUsuario, #hdnFoto, #txtTitulo, #txtISBN, #txtGenero, #txtAutor, #txtEditora, #txtSinopse").val('');
+                         $("#txtFotoJPGJPEG").val(''); // Limpa o campo de arquivo
+
+                    }
+                },
+                error: function (xhr) {
+                    $("#errorMsg").html(xhr.responseText);
+                    $("#divErro").show();
+                }
+            });
+        });
+    });
+</script>

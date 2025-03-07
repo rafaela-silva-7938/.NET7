@@ -1,0 +1,104 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login de Usuário</title>
+
+    <!-- Bootstrap 5.3.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body class="bg-dark text-white">
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card bg-dark text-white shadow-lg p-4" style="width: 100%; max-width: 400px;">
+            <h5 class="text-center mb-3">Redefinir Senha de Acesso</h5>
+
+            <!-- Div de Sucesso -->
+            <div class="alert alert-success alert-dismissible fade show" id="divSuccess" role="alert" style="display:none;">
+                <strong>Sucesso!</strong> <label id="successMsg"></label>
+                <button type="button" class="btn-close" aria-label="Close" onclick="$('#divSuccess').hide();"></button>
+            </div>
+
+            <!-- Div de Erro -->
+            <div class="alert alert-danger alert-dismissible fade show" id="divErro" role="alert" style="display:none;">
+                <strong>Erro!</strong> <label id="errorMsg"></label>
+                <button type="button" class="btn-close" aria-label="Close" onclick="$('#divErro').hide();"></button>
+            </div>
+
+            <form id="form" method="post">
+
+                <input type="hidden" id="txtToken" name="Token" value="@ViewData["Token"]" />
+
+                <div class="mb-3">
+                    <label class="form-label">Senha</label>
+                    <input id="txtNovaSenha" required minlength="8" maxlength="50" name="NovaSenha" type="password"
+                           class="form-control bg-dark text-white border-light" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Redefinir Senha</label>
+                    <input id="txtConfirmarSenha" required minlength="6" maxlength="50" name="ConfirmarSenha" type="password"
+                           class="form-control bg-dark text-white border-light" />
+                </div>
+                
+                <div class="d-grid">
+                    <input id="btnSubmit" type="button" value="Entrar" class="btn btn-primary">
+                </div>
+                <div class="text-center mt-3">
+                    <a href="/Usuario/Login" class="text-white text-decoration-none">Voltar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+
+<script>
+    $(document).ready(function () {
+
+
+        $("#divErro").hide();
+        $("#divSuccess").hide();
+
+        $("#btnSubmit").click(function (e) {
+            e.preventDefault();
+            var RedefinirSenhaModel = {
+                NovaSenha: $("#txtNovaSenha").val(),
+                ConfirmarSenha: $("#txtConfirmarSenha").val(),
+                Token: $("#txtToken").val()
+            };
+
+            $.ajax({
+                type: "POST",
+                url: "/Usuario/RedefinirSenha",
+                data: RedefinirSenhaModel,
+                dataType: "json",
+                success: function (response) {
+                    $("#divErro").hide();
+                    if (response.errorStr) {
+                        $("#errorMsg").html(response.errorStr);
+                        console.log(response.errorStr);
+
+                        $("#divErro").show();
+                    } else {
+                        $("#divSuccess").show();
+                        $("#successMsg").html(response);
+                        $("#txtRedefinirSenha, #txtSenha").val('');
+
+                    }
+                },
+                error: function (xhr) {
+                    $("#errorMsg").html(xhr.responseText);
+                    $("#divErro").show();
+                }
+            });
+        });
+    });
+</script>
